@@ -84,7 +84,8 @@ public class ValueInferrerTest {
                 {is730Context, "saml.validate_assertion_consumer_url_for_signed_requests", false},
                 {is720Context, "saml.validate_assertion_consumer_url_for_signed_requests", false},
                 {is710Context, "saml.validate_assertion_consumer_url_for_signed_requests", false},
-                {is710Context, "ai_services.http_client_use_system_properties", false},
+                // An explicit null declines an inherited entry without giving up the rest of the chain.
+                {is710Context, "ai_services.http_client_use_system_properties", null},
                 // What a block declares itself overrides what it inherits.
                 {is710Context, "webappscommon.inherit_app_level_custom_layout", true},
                 {is720Context, "webappscommon.inherit_app_level_custom_layout", false},

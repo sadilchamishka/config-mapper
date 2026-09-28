@@ -91,8 +91,9 @@ class ValueInferrer {
      * logic only ever sees complete blocks.
      *
      * A block inherits everything its parent declares and may override any of it; what the block declares itself
-     * always wins. This keeps a value that is introduced for the newest variant from having to be copy-pasted into
-     * every older one.
+     * always wins, and an explicit null declines an inherited entry altogether. This keeps a value that is
+     * introduced for the newest variant from having to be copy-pasted into every older one, while still letting a
+     * single variant opt out.
      *
      * infer.json
      *
@@ -103,6 +104,10 @@ class ValueInferrer {
      *     "IS_7.2.0": {
      *       "$extends": "IS_7.3.0",
      *       "ai_services.http_client_use_system_properties": false
+     *     },
+     *     "IS_7.1.0": {
+     *       "$extends": "IS_7.2.0",
+     *       "ai_services.http_client_use_system_properties": null
      *     }
      *   }
      *
@@ -110,6 +115,10 @@ class ValueInferrer {
      *
      *   saml.validate_assertion_consumer_url_for_signed_requests = false
      *   ai_services.http_client_use_system_properties = false
+     *
+     * output for preserve_previous_product_behaviour.version = "IS_7.1.0"
+     *
+     *   saml.validate_assertion_consumer_url_for_signed_requests = false
      *
      * @param inferringData infer rules read from the infer file
      * @return the same rules with every "$extends" resolved
@@ -165,7 +174,14 @@ class ValueInferrer {
             }
         }
         declared.forEach((key, value) -> {
-            if (!EXTENDS_DIRECTIVE.equals(key)) {
+            if (EXTENDS_DIRECTIVE.equals(key)) {
+                return;
+            }
+            if (value == null) {
+                // An explicit null declines an inherited entry, so a block can opt out of one thing its parent
+                // declares without giving up the rest.
+                resolved.remove(key);
+            } else {
                 resolved.put(key, value);
             }
         });
